@@ -28,7 +28,7 @@ func main() {
 
 func newDatabaseClient() *database.Database {
 	connString := fmt.Sprintf(
-		"postgres://%s:%s@%s/%s?pool_max_conns=%S",
+		"postgres://%s:%s@%s/%s?pool_max_conns=%s",
 		os.Getenv("DATABASE_USER"),
 		os.Getenv("DATABASE_PASSWORD"),
 		os.Getenv("DATABASE_HOST"),
@@ -47,7 +47,7 @@ func newDatabaseClient() *database.Database {
 
 func newCacheClient() *cache.PgCache {
 	connString := fmt.Sprintf(
-		"postgres://%s:%s@%s/%s?pool_max_conns=%S",
+		"postgres://%s:%s@%s/%s?pool_max_conns=%s",
 		os.Getenv("CACHE_USER"),
 		os.Getenv("CACHE_PASSWORD"),
 		os.Getenv("CACHE_HOST"),

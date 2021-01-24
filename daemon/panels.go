@@ -8,8 +8,11 @@ import (
 	"github.com/jackc/pgx/v4"
 )
 
+const freePanelLimit = 3
+
 func (d *Daemon) sweepPanels() {
-	rows, err := d.db.Panel.Query(context.Background(), `SELECT "guild_id", COUNT(*) FROM panels GROUP BY guild_id HAVING COUNT(*) > 1;`)
+	query := `SELECT "guild_id", COUNT(*) FROM panels GROUP BY guild_id HAVING COUNT(*) > $1;`
+	rows, err := d.db.Panel.Query(context.Background(), query, freePanelLimit)
 	defer rows.Close()
 	if err != nil {
 		sentry.Error(err)
@@ -72,7 +75,8 @@ func (d *Daemon) sweepPanels() {
 					)
 				;
 				`
-							batch.Queue(query, guildId, panelCount - 1)
+
+				batch.Queue(query, guildId, panelCount - freePanelLimit)
 			}
 		}
 	}
