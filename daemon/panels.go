@@ -57,7 +57,13 @@ func (d *Daemon) sweepPanels() {
 				continue
 			}
 
-			if !hasKey {
+			hasWhitelabelKey, err := d.db.WhitelabelUsers.IsPremium(guild.OwnerId)
+			if err != nil {
+				sentry.Error(err)
+				continue
+			}
+
+			if !hasKey && !hasWhitelabelKey {
 				fmt.Printf("guild %d is not patreon anymore! panel count: %d\n", guildId, panelCount)
 
 				query := `
