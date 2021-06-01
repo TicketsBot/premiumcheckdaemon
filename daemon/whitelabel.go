@@ -9,35 +9,43 @@ import (
 )
 
 func (d *Daemon) sweepWhitelabel() {
+	fmt.Println(1)
 	query := `SELECT "user_id" FROM whitelabel;`
 	rows, err := d.db.Whitelabel.Query(context.Background(), query)
+	fmt.Println(2)
 	defer rows.Close()
 
 	if err != nil {
 		sentry.Error(err)
 		return
 	}
+	fmt.Println(3)
 
 	for rows.Next() {
+		fmt.Println(4)
 		var userId uint64
 		if err := rows.Scan(&userId); err != nil {
 			sentry.Error(err)
 			continue
 		}
+		fmt.Println(5)
 
 		hasWhitelabel, err := d.hasWhitelabel(userId)
 		if err != nil {
 			sentry.Error(err)
 			return
 		}
+		fmt.Println(6)
 
 		if !hasWhitelabel {
+			fmt.Println(7)
 			// get bot ID
 			bot, err := d.db.Whitelabel.GetByUserId(userId)
 			if err != nil {
 				sentry.Error(err)
 				return
 			}
+			fmt.Println(8)
 
 			fmt.Printf("whitelabel: deleting %d (%d)\n", bot.BotId, bot.UserId)
 
