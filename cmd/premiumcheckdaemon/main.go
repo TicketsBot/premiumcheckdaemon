@@ -18,6 +18,7 @@ func main() {
 	if err := sentry.Initialise(sentry.Options{
 		Dsn:     os.Getenv("SENTRY_DSN"),
 		Project: "premiumcheckdaemon",
+		Debug:   true,
 	}); err != nil {
 		fmt.Println(err.Error())
 	}
