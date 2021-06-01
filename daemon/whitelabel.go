@@ -2,6 +2,7 @@ package daemon
 
 import (
 	"context"
+	"fmt"
 	"github.com/TicketsBot/common/premium"
 	"github.com/TicketsBot/common/sentry"
 	"github.com/TicketsBot/common/whitelabeldelete"
@@ -24,29 +25,29 @@ func (d *Daemon) sweepWhitelabel() {
 			continue
 		}
 
-		go func() {
-			hasWhitelabel, err := d.hasWhitelabel(userId)
+		hasWhitelabel, err := d.hasWhitelabel(userId)
+		if err != nil {
+			sentry.Error(err)
+			return
+		}
+
+		if !hasWhitelabel {
+			// get bot ID
+			bot, err := d.db.Whitelabel.GetByUserId(userId)
 			if err != nil {
 				sentry.Error(err)
 				return
 			}
 
-			if !hasWhitelabel {
-				// get bot ID
-				bot, err := d.db.Whitelabel.GetByUserId(userId)
-				if err != nil {
-					sentry.Error(err)
-					return
-				}
+			fmt.Printf("whitelabel: deleting %d (%d)\n", bot.BotId, bot.UserId)
 
-				if err := d.db.Whitelabel.Delete(userId); err != nil {
-					sentry.Error(err)
-					return
-				}
-
-				whitelabeldelete.Publish(d.redis, bot.BotId)
+			if err := d.db.Whitelabel.Delete(userId); err != nil {
+				sentry.Error(err)
+				return
 			}
-		}()
+
+			whitelabeldelete.Publish(d.redis, bot.BotId)
+		}
 	}
 }
 

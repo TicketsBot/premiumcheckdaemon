@@ -64,7 +64,7 @@ func (d *Daemon) sweepPanels() {
 			}
 
 			if !hasKey && !hasWhitelabelKey {
-				fmt.Printf("guild %d is not patreon anymore! panel count: %d\n", guildId, panelCount)
+				fmt.Printf("guild %d (owner: %d) is not a patron anymore! panel count: %d\n", guildId, guild.OwnerId, panelCount)
 
 				query := `
 				DELETE FROM
