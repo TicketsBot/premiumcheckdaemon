@@ -95,10 +95,8 @@ func (d *Daemon) sweepPanels() {
 		}
 	}
 
-	fmt.Println("done panels")
-
-	if _, err := d.db.Panel.SendBatch(context.Background(), batch).Exec(); err != nil {
+	/*if _, err := d.db.Panel.SendBatch(context.Background(), batch).Exec(); err != nil {
 		sentry.Error(err)
-	}
+	}*/
 	fmt.Println("done panels")
 }
