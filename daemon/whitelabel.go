@@ -53,38 +53,29 @@ func (d *Daemon) sweepWhitelabel() {
 
 // use our own function w/ error handling
 func (d *Daemon) hasWhitelabel(userId uint64) (bool, error) {
-	fmt.Println(1)
 	hasWhitelabelKey, err := d.db.WhitelabelUsers.IsPremium(userId)
-	fmt.Println(2)
 	if err != nil {
 		return false, err
 	}
-	fmt.Println(3)
 
 	if hasWhitelabelKey {
 		return true, nil
 	}
-	fmt.Println(4)
 
 	tier, err := d.patreon.GetTier(userId)
-	fmt.Println(5)
 	if err != nil {
 		return false, err
 	}
-	fmt.Println(6)
 
 	if tier >= premium.Whitelabel {
 		return true, nil
 	}
 
-	fmt.Println(7)
 	for _, forced := range d.forced {
 		if forced == userId {
 			return true, nil
 		}
 	}
-
-	fmt.Println(8)
 
 	return false, nil
 }

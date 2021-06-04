@@ -43,7 +43,15 @@ func (d *Daemon) sweepPanels() {
 		}
 
 		// get tier from patreon
-		tier, err := d.patreon.GetTier(guild.OwnerId)
+		admins, err := d.db.Permissions.GetAdmins(guildId)
+		if err != nil {
+			sentry.Error(err)
+			continue
+		}
+
+		admins = append(admins, guild.OwnerId)
+
+		tier, err := d.patreon.GetTier(admins...)
 		if err != nil {
 			sentry.Error(err)
 			continue
@@ -57,7 +65,7 @@ func (d *Daemon) sweepPanels() {
 				continue
 			}
 
-			hasWhitelabelKey, err := d.db.WhitelabelUsers.IsPremium(guild.OwnerId)
+			hasWhitelabelKey, err := d.db.WhitelabelUsers.AnyPremium(admins)
 			if err != nil {
 				sentry.Error(err)
 				continue
