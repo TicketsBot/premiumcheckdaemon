@@ -6,6 +6,7 @@ import (
 	"github.com/TicketsBot/database"
 	"github.com/go-redis/redis"
 	"github.com/rxdn/gdl/cache"
+	"log"
 	"os"
 	"strconv"
 	"strings"
@@ -13,6 +14,7 @@ import (
 )
 
 type Daemon struct {
+	Logger        *log.Logger
 	db            *database.Database
 	cache         *cache.PgCache
 	redis         *redis.Client
@@ -38,6 +40,7 @@ func NewDaemon(db *database.Database, cache *cache.PgCache, redis *redis.Client,
 	}
 
 	return &Daemon{
+		Logger:        log.New(os.Stdout, "[daemon] ", log.LstdFlags),
 		db:            db,
 		cache:         cache,
 		redis:         redis,

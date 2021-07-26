@@ -2,7 +2,6 @@ package daemon
 
 import (
 	"context"
-	"fmt"
 	"github.com/TicketsBot/common/premium"
 	"github.com/TicketsBot/common/sentry"
 	"github.com/jackc/pgx/v4"
@@ -31,7 +30,7 @@ func (d *Daemon) sweepPanels() {
 		guilds[guildId] = panelCount
 	}
 
-	fmt.Printf("Detected %d guilds with > 1 panel\n", len(guilds))
+	d.Logger.Printf("Detected %d guilds with > 1 panel\n", len(guilds))
 
 	batch := &pgx.Batch{}
 
@@ -45,13 +44,13 @@ func (d *Daemon) sweepPanels() {
 		// TODO: Ignore voting?
 		tier, _, err := d.premiumClient.GetTierByGuild(guild)
 		if err != nil {
-			fmt.Printf("error getting premium status for guild %d: %s", guild.Id, err.Error())
+			d.Logger.Printf("error getting premium status for guild %d: %s", guild.Id, err.Error())
 			sentry.Error(err)
 			continue
 		}
 
 		if tier < premium.Premium {
-			fmt.Printf("guild %d (owner: %d) is not a patron anymore! panel count: %d\n", guildId, guild.OwnerId, panelCount)
+			d.Logger.Printf("guild %d (owner: %d) is not a patron anymore! panel count: %d\n", guildId, guild.OwnerId, panelCount)
 
 			query := `
 				DELETE FROM
@@ -73,10 +72,11 @@ func (d *Daemon) sweepPanels() {
 		}
 	}
 
-	fmt.Println(batch.Len())
+	d.Logger.Printf("going to remove %d panels\n", batch.Len())
 
-	/*if _, err := d.db.Panel.SendBatch(context.Background(), batch).Exec(); err != nil {
+	if _, err := d.db.Panel.SendBatch(context.Background(), batch).Exec(); err != nil {
 		sentry.Error(err)
-	}*/
-	fmt.Println("done panels")
+		d.Logger.Printf("error removing panels: %s\n", err.Error())
+	}
+	d.Logger.Printf("done panels")
 }

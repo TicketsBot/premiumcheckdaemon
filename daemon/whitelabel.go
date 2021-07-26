@@ -2,7 +2,6 @@ package daemon
 
 import (
 	"context"
-	"fmt"
 	"github.com/TicketsBot/common/premium"
 	"github.com/TicketsBot/common/sentry"
 	"github.com/TicketsBot/common/whitelabeldelete"
@@ -15,6 +14,7 @@ func (d *Daemon) sweepWhitelabel() {
 
 	if err != nil {
 		sentry.Error(err)
+		d.Logger.Printf("error getting whitelabel users: %s", err.Error())
 		return
 	}
 
@@ -28,6 +28,7 @@ func (d *Daemon) sweepWhitelabel() {
 		hasWhitelabel, err := d.hasWhitelabel(userId)
 		if err != nil {
 			sentry.Error(err)
+			d.Logger.Printf("error checking whitelabel for %d: %s", userId, err.Error())
 			return
 		}
 
@@ -39,10 +40,11 @@ func (d *Daemon) sweepWhitelabel() {
 				return
 			}
 
-			fmt.Printf("whitelabel: deleting %d (%d)\n", bot.BotId, bot.UserId)
+			d.Logger.Printf("whitelabel: deleting %d (%d)\n", bot.BotId, bot.UserId)
 
 			if err := d.db.Whitelabel.Delete(userId); err != nil {
 				sentry.Error(err)
+				d.Logger.Printf("error deleting whitelabel for %d: %s", userId, err.Error())
 				return
 			}
 
