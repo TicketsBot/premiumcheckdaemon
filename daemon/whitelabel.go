@@ -51,6 +51,8 @@ func (d *Daemon) sweepWhitelabel() {
 			whitelabeldelete.Publish(d.redis, bot.BotId)
 		}
 	}
+
+	d.Logger.Println("Done whitelabel")
 }
 
 // use our own function w/ error handling
