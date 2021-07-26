@@ -42,39 +42,18 @@ func (d *Daemon) sweepPanels() {
 			continue
 		}
 
-		// get tier from patreon
-		admins, err := d.db.Permissions.GetAdmins(guildId)
+		// TODO: Ignore voting?
+		tier, _, err := d.premiumClient.GetTierByGuild(guild)
 		if err != nil {
-			sentry.Error(err)
-			continue
-		}
-
-		admins = append(admins, guild.OwnerId)
-
-		tier, err := d.patreon.GetTier(admins...)
-		if err != nil {
+			fmt.Printf("error getting premium status for guild %d: %s", guild.Id, err.Error())
 			sentry.Error(err)
 			continue
 		}
 
 		if tier < premium.Premium {
-			// if not premium on patreon, we should check for a premium key
-			hasKey, err := d.db.PremiumGuilds.IsPremium(guildId)
-			if err != nil {
-				sentry.Error(err)
-				continue
-			}
+			fmt.Printf("guild %d (owner: %d) is not a patron anymore! panel count: %d\n", guildId, guild.OwnerId, panelCount)
 
-			hasWhitelabelKey, err := d.db.WhitelabelUsers.AnyPremium(admins)
-			if err != nil {
-				sentry.Error(err)
-				continue
-			}
-
-			if !hasKey && !hasWhitelabelKey {
-				fmt.Printf("guild %d (owner: %d) is not a patron anymore! panel count: %d\n", guildId, guild.OwnerId, panelCount)
-
-				query := `
+			query := `
 				DELETE FROM
 					panels
 				WHERE
@@ -90,8 +69,7 @@ func (d *Daemon) sweepPanels() {
 				;
 				`
 
-				batch.Queue(query, guildId, panelCount - freePanelLimit)
-			}
+			batch.Queue(query, guildId, panelCount-freePanelLimit)
 		}
 	}
 

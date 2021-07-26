@@ -13,11 +13,12 @@ import (
 )
 
 type Daemon struct {
-	db      *database.Database
-	cache   *cache.PgCache
-	redis   *redis.Client
-	patreon *premium.PatreonClient
-	forced  []uint64
+	db            *database.Database
+	cache         *cache.PgCache
+	redis         *redis.Client
+	patreon       *premium.PatreonClient
+	premiumClient *premium.PremiumLookupClient
+	forced        []uint64
 }
 
 func NewDaemon(db *database.Database, cache *cache.PgCache, redis *redis.Client, patreon *premium.PatreonClient) *Daemon {
@@ -37,11 +38,12 @@ func NewDaemon(db *database.Database, cache *cache.PgCache, redis *redis.Client,
 	}
 
 	return &Daemon{
-		db:      db,
-		cache:   cache,
-		redis:   redis,
-		patreon: patreon,
-		forced:  forced,
+		db:            db,
+		cache:         cache,
+		redis:         redis,
+		patreon:       patreon,
+		premiumClient: premium.NewPremiumLookupClient(patreon, redis, cache, db),
+		forced:        forced,
 	}
 }
 
