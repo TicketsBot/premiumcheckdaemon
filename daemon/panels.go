@@ -72,11 +72,16 @@ func (d *Daemon) sweepPanels() {
 		}
 	}
 
-	d.Logger.Printf("going to remove %d panels\n", batch.Len())
 
-	if _, err := d.db.Panel.SendBatch(context.Background(), batch).Exec(); err != nil {
-		sentry.Error(err)
-		d.Logger.Printf("error removing panels: %s\n", err.Error())
+	if batch.Len() > 0 {
+		d.Logger.Printf("Going to remove %d panels\n", batch.Len())
+		if _, err := d.db.Panel.SendBatch(context.Background(), batch).Exec(); err != nil {
+			sentry.Error(err)
+			d.Logger.Printf("error removing panels: %s\n", err.Error())
+		}
+	} else {
+		d.Logger.Println("No panels to remove")
 	}
+
 	d.Logger.Printf("done panels")
 }
