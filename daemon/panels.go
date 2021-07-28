@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/TicketsBot/common/premium"
 	"github.com/TicketsBot/common/sentry"
-	"github.com/jackc/pgx/v4"
 	"github.com/rxdn/gdl/objects/guild"
 	"github.com/rxdn/gdl/objects/guild/emoji"
 	"github.com/rxdn/gdl/objects/interaction/component"
@@ -38,8 +37,6 @@ func (d *Daemon) sweepPanels() {
 	}
 
 	d.Logger.Printf("Detected %d guilds with > 1 panel\n", len(guilds))
-
-	batch := &pgx.Batch{}
 
 	var ok, notOk int
 
@@ -78,24 +75,17 @@ func (d *Daemon) sweepPanels() {
 				;
 				`
 
-			batch.Queue(query, guildId, panelCount-freePanelLimit)
+			if !d.dryRun {
+				if _, err := d.db.Tickets.Exec(context.Background(), query, guildId, panelCount-freePanelLimit); err != nil {
+					d.Logger.Printf("error deleting panels for guild %d: %s", guild.Id, err.Error())
+					sentry.Error(err)
+					continue
+				}
+			}
 		} else {
 			ok++
 			d.Logger.Printf("guild %d (owner: %d) is ok (%d)\n", guildId, guild.OwnerId, ok)
 		}
-	}
-
-	if batch.Len() > 0 {
-		d.Logger.Printf("Going to remove %d panels\n", batch.Len())
-
-		if !d.dryRun {
-			if _, err := d.db.Panel.SendBatch(context.Background(), batch).Exec(); err != nil {
-				sentry.Error(err)
-				d.Logger.Printf("error removing panels: %s\n", err.Error())
-			}
-		}
-	} else {
-		d.Logger.Println("No panels to remove")
 	}
 
 	d.Logger.Printf("done panels")
