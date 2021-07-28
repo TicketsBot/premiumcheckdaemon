@@ -40,15 +40,17 @@ func (d *Daemon) sweepWhitelabel() {
 				return
 			}
 
-			d.Logger.Printf("whitelabel: deleting %d (%d)\n", bot.BotId, bot.UserId)
+			d.Logger.Printf("whitelabel: deleting bot %d (user %d)\n", bot.BotId, bot.UserId)
 
-			if err := d.db.Whitelabel.Delete(userId); err != nil {
-				sentry.Error(err)
-				d.Logger.Printf("error deleting whitelabel for %d: %s", userId, err.Error())
-				return
+			if !d.dryRun {
+				if err := d.db.Whitelabel.Delete(userId); err != nil {
+					sentry.Error(err)
+					d.Logger.Printf("error deleting whitelabel for %d: %s", userId, err.Error())
+					return
+				}
+
+				whitelabeldelete.Publish(d.redis, bot.BotId)
 			}
-
-			whitelabeldelete.Publish(d.redis, bot.BotId)
 		}
 	}
 

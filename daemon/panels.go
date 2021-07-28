@@ -2,9 +2,16 @@ package daemon
 
 import (
 	"context"
+	"fmt"
 	"github.com/TicketsBot/common/premium"
 	"github.com/TicketsBot/common/sentry"
 	"github.com/jackc/pgx/v4"
+	"github.com/rxdn/gdl/objects/guild"
+	"github.com/rxdn/gdl/objects/guild/emoji"
+	"github.com/rxdn/gdl/objects/interaction/component"
+	"github.com/rxdn/gdl/rest"
+	"github.com/rxdn/gdl/utils"
+	"os"
 )
 
 const freePanelLimit = 3
@@ -34,6 +41,8 @@ func (d *Daemon) sweepPanels() {
 
 	batch := &pgx.Batch{}
 
+	var ok, notOk int
+
 	for guildId, panelCount := range guilds {
 		// get guild owner
 		guild, success := d.cache.GetGuild(guildId, false)
@@ -50,7 +59,8 @@ func (d *Daemon) sweepPanels() {
 		}
 
 		if tier < premium.Premium {
-			d.Logger.Printf("guild %d (owner: %d) is not a patron anymore! panel count: %d\n", guildId, guild.OwnerId, panelCount)
+			notOk++
+			d.Logger.Printf("guild %d (owner: %d) is not a patron anymore! panel count: %d (%d)\n", guildId, guild.OwnerId, panelCount, notOk)
 
 			query := `
 				DELETE FROM
@@ -69,19 +79,57 @@ func (d *Daemon) sweepPanels() {
 				`
 
 			batch.Queue(query, guildId, panelCount-freePanelLimit)
+		} else {
+			ok++
+			d.Logger.Printf("guild %d (owner: %d) is ok (%d)\n", guildId, guild.OwnerId, ok)
 		}
 	}
 
-
 	if batch.Len() > 0 {
 		d.Logger.Printf("Going to remove %d panels\n", batch.Len())
-		if _, err := d.db.Panel.SendBatch(context.Background(), batch).Exec(); err != nil {
-			sentry.Error(err)
-			d.Logger.Printf("error removing panels: %s\n", err.Error())
+
+		if !d.dryRun {
+			if _, err := d.db.Panel.SendBatch(context.Background(), batch).Exec(); err != nil {
+				sentry.Error(err)
+				d.Logger.Printf("error removing panels: %s\n", err.Error())
+			}
 		}
 	} else {
 		d.Logger.Println("No panels to remove")
 	}
 
 	d.Logger.Printf("done panels")
+}
+
+func warn(ownerId uint64, guild guild.Guild) {
+	token := os.Getenv("BOT_TOKEN")
+
+	ch, err := rest.CreateDM(token, nil, ownerId)
+	if err != nil {
+		fmt.Println(err.Error())
+		return
+	}
+
+	content := fmt.Sprintf(":warning: Your server `%s` has exceeded the free panel quota (3). As a result, the additional panels will be deleted. If you believe this is in error, please join our support server by clicking the button below.", guild.Name)
+	data := rest.CreateMessageData{
+		Content:          content,
+		Components: []component.Component{
+			component.BuildActionRow(component.BuildButton(component.Button{
+				Label: "Support Server",
+				Style: component.ButtonStyleLink,
+				Emoji: emoji.Emoji{
+					Name: "👋",
+				},
+				Url:      utils.StrPtr("https://discord.gg/VtV3rSk"),
+			})),
+		},
+	}
+
+	_, err = rest.CreateMessage(token, nil, ch.Id, data)
+	if err != nil {
+		fmt.Println(err.Error())
+		return
+	}
+
+	fmt.Printf("warned %d\n", ownerId)
 }

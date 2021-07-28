@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"github.com/TicketsBot/common/premium"
 	"github.com/TicketsBot/common/sentry"
@@ -14,7 +15,12 @@ import (
 	"strconv"
 )
 
+var dryRun = flag.Bool("dryrun", false, "If set, no changes will be made")
+
 func main() {
+	flag.Parse()
+	fmt.Printf("Dry-run: %v\n", *dryRun)
+
 	if err := sentry.Initialise(sentry.Options{
 		Dsn:     os.Getenv("SENTRY_DSN"),
 		Project: "premiumcheckdaemon",
@@ -23,7 +29,7 @@ func main() {
 		fmt.Println(err.Error())
 	}
 
-	daemon := daemon.NewDaemon(newDatabaseClient(), newCacheClient(), newRedisClient(), newPatreonClient())
+	daemon := daemon.NewDaemon(newDatabaseClient(), newCacheClient(), newRedisClient(), newPatreonClient(), *dryRun)
 	daemon.Start()
 }
 

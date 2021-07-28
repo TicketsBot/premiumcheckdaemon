@@ -21,9 +21,10 @@ type Daemon struct {
 	patreon       *premium.PatreonClient
 	premiumClient *premium.PremiumLookupClient
 	forced        []uint64
+	dryRun        bool
 }
 
-func NewDaemon(db *database.Database, cache *cache.PgCache, redis *redis.Client, patreon *premium.PatreonClient) *Daemon {
+func NewDaemon(db *database.Database, cache *cache.PgCache, redis *redis.Client, patreon *premium.PatreonClient, dryRun bool) *Daemon {
 	var forced []uint64
 	for _, raw := range strings.Split(os.Getenv("FORCED"), ",") {
 		if raw == "" {
