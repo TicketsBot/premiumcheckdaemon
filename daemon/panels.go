@@ -59,27 +59,28 @@ func (d *Daemon) sweepPanels() {
 			notOk++
 			d.Logger.Printf("guild %d (owner: %d) is not a patron anymore! panel count: %d (%d)\n", guildId, guild.OwnerId, panelCount, notOk)
 
-			query := `
-				DELETE FROM
-					panels
-				WHERE
-					"message_id" IN (
-						SELECT
-							"message_id"
-						FROM
-							panels
-						WHERE
-							"guild_id" = $1
-						LIMIT $2
-					)
-				;
-				`
+			// Delete with select subquery destroys CPU
+			// Instead, select X-3 panels first
+			panels, err := d.db.Panel.GetByGuild(guildId)
+			if err != nil {
+				d.Logger.Printf("error getting panels for guild %d: %s", guild.Id, err.Error())
+				sentry.Error(err)
+				continue
+			}
+
+			// Double check
+			if len(panels) < 3 {
+				continue
+			}
 
 			if !d.dryRun {
-				if _, err := d.db.Tickets.Exec(context.Background(), query, guildId, panelCount-freePanelLimit); err != nil {
-					d.Logger.Printf("error deleting panels for guild %d: %s", guild.Id, err.Error())
-					sentry.Error(err)
-					continue
+				// TODO: Bulk
+				for i := 0; i < len(panels)-3; i++ {
+					if err := d.db.Panel.Delete(panels[i].PanelId); err != nil {
+						d.Logger.Printf("error deleting panels for guild %d: %s", guild.Id, err.Error())
+						sentry.Error(err)
+						continue
+					}
 				}
 			}
 		} else {
@@ -102,7 +103,7 @@ func warn(ownerId uint64, guild guild.Guild) {
 
 	content := fmt.Sprintf(":warning: Your server `%s` has exceeded the free panel quota (3). As a result, the additional panels will be deleted. If you believe this is in error, please join our support server by clicking the button below.", guild.Name)
 	data := rest.CreateMessageData{
-		Content:          content,
+		Content: content,
 		Components: []component.Component{
 			component.BuildActionRow(component.BuildButton(component.Button{
 				Label: "Support Server",
@@ -110,7 +111,7 @@ func warn(ownerId uint64, guild guild.Guild) {
 				Emoji: emoji.Emoji{
 					Name: "👋",
 				},
-				Url:      utils.StrPtr("https://discord.gg/VtV3rSk"),
+				Url: utils.StrPtr("https://discord.gg/VtV3rSk"),
 			})),
 		},
 	}
