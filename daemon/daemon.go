@@ -53,6 +53,13 @@ func NewDaemon(db *database.Database, cache *cache.PgCache, redis *redis.Client,
 
 func (d *Daemon) Start() {
 	for {
+		// Lenience
+		if time.Now().Day() <= 5 {
+			d.Logger.Println("day <= 5, skipping")
+			time.Sleep(time.Hour * 6)
+			continue
+		}
+
 		d.sweepWhitelabel()
 		d.sweepPanels()
 		time.Sleep(time.Hour * 6)
