@@ -1,8 +1,9 @@
 github.com/ReneKroon/ttlcache v1.6.0/go.mod h1:DG6nbhXKUQhrExfwwLuZUdH7UnRDDRA1IW+nBuCssvs=
 github.com/TicketsBot/common v0.0.0-20210727134627-35eb7ed03a44 h1:h33Z6HOYfpqSa3dF3rREcia7FEfM1/dTxbf7g3erMA0=
 github.com/TicketsBot/common v0.0.0-20210727134627-35eb7ed03a44/go.mod h1:wVX+aRKhC57QGFRkDBR8TiJsPycvpeTAsmrFOfVJqtk=
-github.com/TicketsBot/database v0.0.0-20210604172320-343ef21cf7e9 h1:pVQhN7SFfEFE4+Qpo9Z6UwKoesJgM9QiR1TJSdLiiNI=
 github.com/TicketsBot/database v0.0.0-20210604172320-343ef21cf7e9/go.mod h1:eky4tBL+IZ0svPgTT0N/9i6j7ygHDQH3784DW+HgfcA=
+github.com/TicketsBot/database v0.0.0-20220810174716-47db2a1041cd h1:bDzCjzEw1VO22g7RG5GZ+5ckhuoBPXXlWFmrYT7nBSI=
+github.com/TicketsBot/database v0.0.0-20220810174716-47db2a1041cd/go.mod h1:gAtOoQKZfCkQ4AoNWQUSl51Fnlqk+odzD/hZ1e1sXyI=
 github.com/TicketsBot/ttlcache v1.6.1-0.20200405150101-acc18e37b261 h1:NHD5GB6cjlkpZFjC76Yli2S63/J2nhr8MuE6KlYJpQM=
 github.com/TicketsBot/ttlcache v1.6.1-0.20200405150101-acc18e37b261/go.mod h1:2zPxDAN2TAPpxUPjxszjs3QFKreKrQh5al/R3cMXmYk=
 github.com/boltdb/bolt v1.3.1 h1:JQmyP4ZBrce+ZQu0dY660FMfatumYDLun9hBCUVIkF4=
@@ -90,8 +91,9 @@ github.com/jackc/puddle v0.0.0-20190608224051-11cab39313c9/go.mod h1:m4B5Dj62Y0f
 github.com/jackc/puddle v1.1.0 h1:musOWczZC/rSbqut475Vfcczg7jJsdUQf0D6oKPLgNU=
 github.com/jackc/puddle v1.1.0/go.mod h1:m4B5Dj62Y0fbyuIc15OsIqK0+JU8nkqQjsgx7dvjSWk=
 github.com/jmoiron/sqlx v1.2.0/go.mod h1:1FEQNm3xlJgrMD+FBdI9+xvCksHtbpVBBw5dYhBSsks=
-github.com/json-iterator/go v1.1.10 h1:Kz6Cvnvv2wGdaG/V8yMvfkmNiXq9Ya2KUv4rouJJr68=
 github.com/json-iterator/go v1.1.10/go.mod h1:KdQUCv79m/52Kvf8AW2vK1V8akMuk1QjK/uOdHXbAo4=
+github.com/json-iterator/go v1.1.12 h1:PV8peI4a0ysnczrg+LtxykD8LfKY9ML6u2jnxaEnrnM=
+github.com/json-iterator/go v1.1.12/go.mod h1:e30LSqwooZae/UwlEbR2852Gd8hjQvJoHmT4TnhNGBo=
 github.com/juju/ratelimit v1.0.1 h1:+7AIFJVQ0EQgq/K9+0Krm7m530Du7tIz0METWzN0RgY=
 github.com/juju/ratelimit v1.0.1/go.mod h1:qapgC/Gy+xNh9UxzV13HGGl/6UXNN+ct+vwSgWNm/qk=
 github.com/klauspost/compress v1.10.0/go.mod h1:aoV0uJVorq1K+umq18yTdKaF57EivdYsUV+/s2qKfXs=
@@ -118,8 +120,9 @@ github.com/mattn/go-isatty v0.0.9/go.mod h1:YNRxwqDuOph6SZLI9vUUz6OYw3QyUt7WiY2y
 github.com/mattn/go-sqlite3 v1.9.0/go.mod h1:FPy6KqzDD04eiIsT53CuJW3U88zkxoIYsOqkbpncsNc=
 github.com/modern-go/concurrent v0.0.0-20180228061459-e0a39a4cb421 h1:ZqeYNhU3OHLH3mGKHDcjJRFFRrJa6eAM5H+CtDdOsPc=
 github.com/modern-go/concurrent v0.0.0-20180228061459-e0a39a4cb421/go.mod h1:6dJC0mAP4ikYIbvyc7fijjWJddQyLn8Ig3JB5CqoB9Q=
-github.com/modern-go/reflect2 v0.0.0-20180701023420-4b7aa43c6742 h1:Esafd1046DLDQ0W1YjYsBW+p8U2u7vzgW2SQVmlNazg=
 github.com/modern-go/reflect2 v0.0.0-20180701023420-4b7aa43c6742/go.mod h1:bx2lNnkwVCuqBIxFjflWJWanXIb3RllmbCylyMrvgv0=
+github.com/modern-go/reflect2 v1.0.2 h1:xBagoLtFs94CBntxluKeaWgTMpvLxC4ur3nMaC9Gz0M=
+github.com/modern-go/reflect2 v1.0.2/go.mod h1:yWuevngMOJpCy52FWWMvUC8ws7m/LJsjYzDa0/r8luk=
 github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e h1:fD57ERR4JtEqsWbfPhv4DMiApHyliiK5xCTNVSPiaAs=
 github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e/go.mod h1:zD1mROLANZcx1PVRCS0qkT7pwLkGfwJo4zjcN/Tysno=
 github.com/onsi/ginkgo v1.6.0/go.mod h1:lLunBs/Ym6LB5Z9jYTR76FiuTmxDTDusOGeTQH+WWjE=
@@ -138,7 +141,6 @@ github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZN
 github.com/rs/xid v1.2.1/go.mod h1:+uKXf+4Djp6Md1KODXJxgGQPKngRmWyn10oCKFzNHOQ=
 github.com/rs/zerolog v1.13.0/go.mod h1:YbFCdg8HfsridGWAh22vktObvhZbQsZXe4/zB0OKkWU=
 github.com/rs/zerolog v1.15.0/go.mod h1:xYTKnLHcpfU2225ny5qZjxnj9NvkumZYjJHlAThCjNc=
-github.com/rxdn/gdl v0.0.0-20210527173953-25dde613ff0a h1:cGEs8l/Zbw+qw0kVVqySH1JkhR0ekl7ISvgblFkLWnc=
 github.com/rxdn/gdl v0.0.0-20210527173953-25dde613ff0a/go.mod h1:jvcb1N6AdaGx3/e8MoLedO6qSo/+UdA5GGHOA8cnAeU=
 github.com/rxdn/gdl v0.0.0-20210604202827-a6559f1821ad h1:I/NEKYBsbw1Tp3hLMosz08SZh6Bn48I7lkp5ZW6P6+8=
 github.com/rxdn/gdl v0.0.0-20210604202827-a6559f1821ad/go.mod h1:jvcb1N6AdaGx3/e8MoLedO6qSo/+UdA5GGHOA8cnAeU=
