@@ -13,7 +13,7 @@ import (
 	"os"
 )
 
-const freePanelLimit = 2
+const freePanelLimit = 3
 
 func (d *Daemon) sweepPanels() {
 	query := `SELECT "guild_id", COUNT(*) FROM panels WHERE "force_disabled" = false GROUP BY guild_id HAVING COUNT(*) > $1;`
