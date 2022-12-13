@@ -9,6 +9,7 @@ import (
 	"github.com/TicketsBot/database"
 	"github.com/TicketsBot/whitelabelpremiumcheckdaemon/daemon"
 	"github.com/go-redis/redis"
+	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/rxdn/gdl/cache"
 	"os"
@@ -43,7 +44,10 @@ func newDatabaseClient() *database.Database {
 		os.Getenv("DATABASE_THREADS"),
 	)
 
-	pool, err := pgxpool.Connect(context.Background(), connString)
+	//pool, err := pgxpool.Connect(context.Background(), connString)
+	c, _ := pgxpool.ParseConfig(connString)
+	c.ConnConfig.LogLevel = pgx.LogLevelTrace
+	pool, err := pgxpool.ConnectConfig(context.Background(), c)
 	if err != nil {
 		sentry.Error(err)
 		panic(err)

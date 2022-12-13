@@ -13,10 +13,10 @@ import (
 	"os"
 )
 
-const freePanelLimit = 3
+const freePanelLimit = 2
 
 func (d *Daemon) sweepPanels() {
-	query := `SELECT "guild_id", COUNT(*) FROM panels GROUP BY guild_id HAVING COUNT(*) > $1;`
+	query := `SELECT "guild_id", COUNT(*) FROM panels WHERE "force_disabled" = false GROUP BY guild_id HAVING COUNT(*) > $1;`
 	rows, err := d.db.Panel.Query(context.Background(), query, freePanelLimit)
 	defer rows.Close()
 	if err != nil {
@@ -36,7 +36,7 @@ func (d *Daemon) sweepPanels() {
 		guilds[guildId] = panelCount
 	}
 
-	d.Logger.Printf("Detected %d guilds with > 1 panel\n", len(guilds))
+	d.Logger.Printf("Detected %d guilds with > %d panels\n", len(guilds), freePanelLimit)
 
 	var ok, notOk int
 
@@ -69,18 +69,15 @@ func (d *Daemon) sweepPanels() {
 			}
 
 			// Double check
-			if len(panels) < 3 {
+			if len(panels) < freePanelLimit {
 				continue
 			}
 
 			if !d.dryRun {
-				// TODO: Bulk
-				for i := 0; i < len(panels)-3; i++ {
-					if err := d.db.Panel.Delete(panels[i].PanelId); err != nil {
-						d.Logger.Printf("error deleting panels for guild %d: %s", guild.Id, err.Error())
-						sentry.Error(err)
-						continue
-					}
+				if err := d.db.Panel.DisableSome(guildId, freePanelLimit); err != nil {
+					d.Logger.Printf("error disabling panels for guild %d: %s", guild.Id, err.Error())
+					sentry.Error(err)
+					continue
 				}
 			}
 		} else {
