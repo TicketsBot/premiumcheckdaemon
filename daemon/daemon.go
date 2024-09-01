@@ -1,10 +1,11 @@
 package daemon
 
 import (
+	"context"
 	"github.com/TicketsBot/common/premium"
 	"github.com/TicketsBot/common/sentry"
 	"github.com/TicketsBot/database"
-	"github.com/go-redis/redis"
+	"github.com/go-redis/redis/v8"
 	"github.com/rxdn/gdl/cache"
 	"log"
 	"os"
@@ -18,13 +19,12 @@ type Daemon struct {
 	db            *database.Database
 	cache         *cache.PgCache
 	redis         *redis.Client
-	patreon       *premium.PatreonClient
 	premiumClient *premium.PremiumLookupClient
 	forced        []uint64
 	dryRun        bool
 }
 
-func NewDaemon(db *database.Database, cache *cache.PgCache, redis *redis.Client, patreon *premium.PatreonClient, dryRun bool) *Daemon {
+func NewDaemon(db *database.Database, cache *cache.PgCache, redis *redis.Client, dryRun bool) *Daemon {
 	var forced []uint64
 	for _, raw := range strings.Split(os.Getenv("FORCED"), ",") {
 		if raw == "" {
@@ -45,23 +45,26 @@ func NewDaemon(db *database.Database, cache *cache.PgCache, redis *redis.Client,
 		db:            db,
 		cache:         cache,
 		redis:         redis,
-		patreon:       patreon,
-		premiumClient: premium.NewPremiumLookupClient(patreon, redis, cache, db),
+		premiumClient: premium.NewPremiumLookupClient(redis, cache, db),
 		forced:        forced,
+		dryRun:        dryRun,
 	}
 }
 
 func (d *Daemon) Start() {
 	for {
-		// Lenience
-		if time.Now().Day() <= 5 {
-			d.Logger.Println("day <= 5, skipping")
-			time.Sleep(time.Hour * 6)
-			continue
+		select {
+		case <-time.After(time.Minute * 10): // TODO: Don't hardcode
+			d.Logger.Println("Starting run")
+			d.doOne()
 		}
-
-		d.sweepWhitelabel()
-		d.sweepPanels()
-		time.Sleep(time.Hour * 6)
 	}
+}
+
+func (d *Daemon) doOne() {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute*10) // TODO: Don't hardcode
+	defer cancel()
+
+	d.sweepPanels(ctx)
+	d.sweepWhitelabel(ctx)
 }

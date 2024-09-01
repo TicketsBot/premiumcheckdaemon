@@ -2,14 +2,15 @@ package daemon
 
 import (
 	"context"
+	"github.com/TicketsBot/common/model"
 	"github.com/TicketsBot/common/premium"
 	"github.com/TicketsBot/common/sentry"
 	"github.com/TicketsBot/common/whitelabeldelete"
 )
 
-func (d *Daemon) sweepWhitelabel() {
+func (d *Daemon) sweepWhitelabel(ctx context.Context) {
 	query := `SELECT "user_id" FROM whitelabel;`
-	rows, err := d.db.Whitelabel.Query(context.Background(), query)
+	rows, err := d.db.Whitelabel.Query(ctx, query)
 	defer rows.Close()
 
 	if err != nil {
@@ -25,16 +26,24 @@ func (d *Daemon) sweepWhitelabel() {
 			continue
 		}
 
-		hasWhitelabel, err := d.hasWhitelabel(userId)
+		entitlements, err := d.db.Entitlements.ListUserSubscriptions(ctx, userId, premium.GracePeriod)
 		if err != nil {
 			sentry.Error(err)
-			d.Logger.Printf("error checking whitelabel for %d: %s", userId, err.Error())
+			d.Logger.Printf("error getting entitlements for %d: %s", userId, err.Error())
 			return
+		}
+
+		hasWhitelabel := false
+		for _, entitlement := range entitlements {
+			if entitlement.Tier == model.EntitlementTierWhitelabel {
+				hasWhitelabel = true
+				break
+			}
 		}
 
 		if !hasWhitelabel {
 			// get bot ID
-			bot, err := d.db.Whitelabel.GetByUserId(userId)
+			bot, err := d.db.Whitelabel.GetByUserId(ctx, userId)
 			if err != nil {
 				sentry.Error(err)
 				return
@@ -43,7 +52,7 @@ func (d *Daemon) sweepWhitelabel() {
 			d.Logger.Printf("whitelabel: deleting bot %d (user %d)\n", bot.BotId, bot.UserId)
 
 			if !d.dryRun {
-				if err := d.db.Whitelabel.Delete(userId); err != nil {
+				if err := d.db.Whitelabel.Delete(ctx, userId); err != nil {
 					sentry.Error(err)
 					d.Logger.Printf("error deleting whitelabel for %d: %s", userId, err.Error())
 					return
@@ -55,33 +64,4 @@ func (d *Daemon) sweepWhitelabel() {
 	}
 
 	d.Logger.Println("Done whitelabel")
-}
-
-// use our own function w/ error handling
-func (d *Daemon) hasWhitelabel(userId uint64) (bool, error) {
-	hasWhitelabelKey, err := d.db.WhitelabelUsers.IsPremium(userId)
-	if err != nil {
-		return false, err
-	}
-
-	if hasWhitelabelKey {
-		return true, nil
-	}
-
-	tier, err := d.patreon.GetTier(userId)
-	if err != nil {
-		return false, err
-	}
-
-	if tier >= premium.Whitelabel {
-		return true, nil
-	}
-
-	for _, forced := range d.forced {
-		if forced == userId {
-			return true, nil
-		}
-	}
-
-	return false, nil
 }

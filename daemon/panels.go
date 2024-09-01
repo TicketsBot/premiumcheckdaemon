@@ -2,22 +2,17 @@ package daemon
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"github.com/TicketsBot/common/premium"
 	"github.com/TicketsBot/common/sentry"
-	"github.com/rxdn/gdl/objects/guild"
-	"github.com/rxdn/gdl/objects/guild/emoji"
-	"github.com/rxdn/gdl/objects/interaction/component"
-	"github.com/rxdn/gdl/rest"
-	"github.com/rxdn/gdl/utils"
-	"os"
+	"github.com/rxdn/gdl/cache"
 )
 
 const freePanelLimit = 3
 
-func (d *Daemon) sweepPanels() {
+func (d *Daemon) sweepPanels(ctx context.Context) {
 	query := `SELECT "guild_id", COUNT(*) FROM panels WHERE "force_disabled" = false GROUP BY guild_id HAVING COUNT(*) > $1;`
-	rows, err := d.db.Panel.Query(context.Background(), query, freePanelLimit)
+	rows, err := d.db.Panel.Query(ctx, query, freePanelLimit)
 	defer rows.Close()
 	if err != nil {
 		sentry.Error(err)
@@ -42,13 +37,15 @@ func (d *Daemon) sweepPanels() {
 
 	for guildId, panelCount := range guilds {
 		// get guild owner
-		guild, success := d.cache.GetGuild(guildId, false)
-		if !success || guild.OwnerId == 0 { // if bot's been kicked doesn't matter, when we rejoin we'll purge
-			continue
+		guild, err := d.cache.GetGuild(ctx, guildId)
+		if err != nil {
+			if errors.Is(err, cache.ErrNotFound) {
+				continue // if bot's been kicked doesn't matter, when we rejoin we'll purge
+			}
 		}
 
 		// TODO: Ignore voting?
-		tier, _, err := d.premiumClient.GetTierByGuild(guild)
+		tier, _, err := d.premiumClient.GetTierByGuild(ctx, guild)
 		if err != nil {
 			d.Logger.Printf("error getting premium status for guild %d: %s", guild.Id, err.Error())
 			sentry.Error(err)
@@ -61,7 +58,7 @@ func (d *Daemon) sweepPanels() {
 
 			// Delete with select subquery destroys CPU
 			// Instead, select X-3 panels first
-			panels, err := d.db.Panel.GetByGuild(guildId)
+			panels, err := d.db.Panel.GetByGuild(ctx, guildId)
 			if err != nil {
 				d.Logger.Printf("error getting panels for guild %d: %s", guild.Id, err.Error())
 				sentry.Error(err)
@@ -74,7 +71,7 @@ func (d *Daemon) sweepPanels() {
 			}
 
 			if !d.dryRun {
-				if err := d.db.Panel.DisableSome(guildId, freePanelLimit); err != nil {
+				if err := d.db.Panel.DisableSome(ctx, guildId, freePanelLimit); err != nil {
 					d.Logger.Printf("error disabling panels for guild %d: %s", guild.Id, err.Error())
 					sentry.Error(err)
 					continue
@@ -87,37 +84,4 @@ func (d *Daemon) sweepPanels() {
 	}
 
 	d.Logger.Printf("done panels")
-}
-
-func warn(ownerId uint64, guild guild.Guild) {
-	token := os.Getenv("BOT_TOKEN")
-
-	ch, err := rest.CreateDM(token, nil, ownerId)
-	if err != nil {
-		fmt.Println(err.Error())
-		return
-	}
-
-	content := fmt.Sprintf(":warning: Your server `%s` has exceeded the free panel quota (3). As a result, the additional panels will be deleted. If you believe this is in error, please join our support server by clicking the button below.", guild.Name)
-	data := rest.CreateMessageData{
-		Content: content,
-		Components: []component.Component{
-			component.BuildActionRow(component.BuildButton(component.Button{
-				Label: "Support Server",
-				Style: component.ButtonStyleLink,
-				Emoji: emoji.Emoji{
-					Name: "👋",
-				},
-				Url: utils.StrPtr("https://discord.gg/VtV3rSk"),
-			})),
-		},
-	}
-
-	_, err = rest.CreateMessage(token, nil, ch.Id, data)
-	if err != nil {
-		fmt.Println(err.Error())
-		return
-	}
-
-	fmt.Printf("warned %d\n", ownerId)
 }

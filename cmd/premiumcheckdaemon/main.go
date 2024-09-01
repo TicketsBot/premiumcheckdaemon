@@ -4,11 +4,10 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"github.com/TicketsBot/common/premium"
 	"github.com/TicketsBot/common/sentry"
 	"github.com/TicketsBot/database"
-	"github.com/TicketsBot/whitelabelpremiumcheckdaemon/daemon"
-	"github.com/go-redis/redis"
+	"github.com/TicketsBot/premiumcheckdaemon/daemon"
+	"github.com/go-redis/redis/v8"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/rxdn/gdl/cache"
@@ -23,14 +22,13 @@ func main() {
 	fmt.Printf("Dry-run: %v\n", *dryRun)
 
 	if err := sentry.Initialise(sentry.Options{
-		Dsn:     os.Getenv("SENTRY_DSN"),
-		Project: "premiumcheckdaemon",
-		Debug:   true,
+		Dsn:   os.Getenv("SENTRY_DSN"),
+		Debug: true,
 	}); err != nil {
 		fmt.Println(err.Error())
 	}
 
-	daemon := daemon.NewDaemon(newDatabaseClient(), newCacheClient(), newRedisClient(), newPatreonClient(), *dryRun)
+	daemon := daemon.NewDaemon(newDatabaseClient(), newCacheClient(), newRedisClient(), *dryRun)
 	daemon.Start()
 }
 
@@ -100,14 +98,10 @@ func newRedisClient() (client *redis.Client) {
 	}
 
 	client = redis.NewClient(options)
-	if err := client.Ping().Err(); err != nil {
+	if err := client.Ping(context.Background()).Err(); err != nil {
 		sentry.Error(err)
 		panic(err)
 	}
 
 	return
-}
-
-func newPatreonClient() *premium.PatreonClient {
-	return premium.NewPatreonClient(os.Getenv("PROXY_URL"), os.Getenv("PROXY_KEY"))
 }
